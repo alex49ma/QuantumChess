@@ -3,9 +3,10 @@ import chess
 import copy
 import Position
 import Piece
-from stockfish import Stockfish
+import stockfish
+#from stockfish import stockfish
 
-stockfish = Stockfish(path="./stockfish_15_win_x64_avx2/stockfish_15_x64_avx2.exe")
+# stockfish = Stockfish(path="./stockfish_15_win_x64_avx2/stockfish_15_x64_avx2.exe")
 
 class ChessUtils:
 
@@ -192,13 +193,16 @@ class ChessUtils:
             return False
         elif abs(ord(move[0]) - ord(move[2])) == 1 and abs(int(move[1]) - int(move[3])) == 1:           # Normal capture pawn move
             if move[2:4] != None:
-                if (int(move[1]) - int(move[3]) < 0 and flags[0] == "w") or (int(move[1]) - int(move[3]) > 0 and flags[0] == "b"):
-                    if (int(move[3]) == 1 and flags[0] == "b") | (int(move[3]) == 8 and flags[0] == "w"):
-                        if len(move) > 4:
-                            if move[4] in "qrbk":
+                captured = position.getWhatIsOnSquare(move[2:4])
+                if captured:
+                    if (captured.pieceClass.islower() and flags[0] == "w") or (captured.pieceClass.isupper() and flags[0] == "b"):
+                        if (int(move[1]) - int(move[3]) < 0 and flags[0] == "w") or (int(move[1]) - int(move[3]) > 0 and flags[0] == "b"):
+                            if (int(move[3]) == 1 and flags[0] == "b") | (int(move[3]) == 8 and flags[0] == "w"):
+                                if len(move) > 4:
+                                    if move[4] in "qrbk":
+                                        return True
+                            else:
                                 return True
-                    else:
-                        return True
             elif len(flags[2]) == 2:
                 if flags[2][1] == move[1] and flags[2][0] == move[2]:                                   # En passent pawn move
                     if (int(move[1]) - int(move[3]) < 0 and flags[0] == "w") or (int(move[1]) - int(move[3]) > 0 and flags[0] == "b"):
