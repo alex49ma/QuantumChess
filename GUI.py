@@ -198,44 +198,14 @@ class ChessGUI:
                     self.pieces[piece_id] = (piece, row, col)
 
     def select_square(self, row, col):
-        #x1 = col * self.square_size
-        #y1 = row * self.square_size
-        #x2 = x1 + self.square_size
-        #y2 = y1 + self.square_size
-        #key = 1
         sq = chr(col + ord('a')) + str(8 - row)
         if str(row) + str(col) == self.sel_square:
-            #new_color = self.original_colors[(row, col)]
             self.sel_square = ""
         elif self.sel_square == "":
-            #new_color = color
             self.sel_square = str(row) + str(col)
         else:
-            #key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
             selected = chr(int(self.sel_square[1]) + ord('a')) + str(8 - int(self.sel_square[0]))
             self.perform_move(selected, sq)
-            
-            """
-
-        if key:
-            piece = self.game.position.getWhatIsOnSquare(sq)
-            if piece:
-                figure = piece_mapping.get(piece.pieceClass, "")
-                if piece.quantic:
-                    frame_width = self.square_size/8
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="purple")
-                    x1 += frame_width
-                    y1 += frame_width
-                    x2 -= frame_width
-                    y2 -= frame_width
-            else:
-                figure = ""
-            self.canvas.create_rectangle(x1, y1, x2, y2, fill=new_color)
-            x = col * self.square_size + self.square_size // 2
-            y = row * self.square_size + self.square_size // 2
-            self.canvas.create_text(x, y, text=figure, font=("Helvetica", 24), tags=("piece",))
-
-            """
 
     def select_quantum(self, row, col):
         key = 1
