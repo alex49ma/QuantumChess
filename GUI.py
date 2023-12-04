@@ -120,16 +120,16 @@ class ChessGUI:
     def enter_quantum_mode(self):
         self.quantum_mode = not self.quantum_mode
         if self.quantum_mode:
-            self.button_quantum.config(text="Exit Quantum Mode", bg= "purple")
+            self.button_quantum.config(text="Exit Quantum Mode", bg= "BlueViolet")
             self.sel_square = ""
-            #self.draw_board()
-            #self.draw_pieces()
+            self.draw_board()
+            self.draw_pieces()
         else:
             self.quantum_piece = None
             self.button_quantum.config(text="Enter Quantum Mode", bg= "white")
             self.quantum_squares = []
-            #self.draw_board()
-            #self.draw_pieces()
+            self.draw_board()
+            self.draw_pieces()
 
     def draw_board(self):
         for col in range(self.board_size):
@@ -141,18 +141,22 @@ class ChessGUI:
                 x1 = x0 + self.square_size
                 y1 = y0 + self.square_size
                 if str(row) + str(col) in self.quantum_squares:
-                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="purple")
+                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="BlueViolet")
                 elif str(row) + str(col) in self.sel_square:
                     self.canvas.create_rectangle(x0, y0, x1, y1, fill="green")
                 else:
                     self.original_colors[(row, col)] = color
                     self.canvas.create_rectangle(x0, y0, x1, y1, fill=color)
-                    sq = chr(col + ord('a')) + str(8 - row)
-                    piece = self.game.position.getWhatIsOnSquare(sq)
-                    if piece:
-                        if piece.quantic:
-                            self.canvas.create_rectangle(x0, y0, x1, y1, fill="purple")
-                            self.canvas.create_rectangle(x0 + frame_width, y0 + frame_width, x1 - frame_width, y1 - frame_width, fill=color)
+                sq = chr(col + ord('a')) + str(8 - row)
+                piece = self.game.position.getWhatIsOnSquare(sq)
+                if piece:
+                    if piece.quantic:
+                        self.canvas.create_rectangle(x0, y0, x1, y1, fill="BlueViolet")
+                        if str(row) + str(col) in self.sel_square:
+                            color = "green"
+                        self.canvas.create_rectangle(x0 + frame_width, y0 + frame_width, x1 - frame_width, y1 - frame_width, fill=color)
+                        if str(row) + str(col) in self.quantum_squares:
+                            self.canvas.create_rectangle(x0 + frame_width * 1.5, y0 + frame_width * 1.5, x1 - frame_width * 1.5, y1 - frame_width * 1.5, fill="BlueViolet")
         
             x0 = self.square_size * col
             y0 = self.square_size * 8
@@ -193,21 +197,21 @@ class ChessGUI:
                     piece_id = self.canvas.create_text(x, y, text=text, font=("Helvetica", 24), tags=("piece",))
                     self.pieces[piece_id] = (piece, row, col)
 
-    def select_square(self, row, col, color):
-        x1 = col * self.square_size
-        y1 = row * self.square_size
-        x2 = x1 + self.square_size
-        y2 = y1 + self.square_size
-        key = 1
+    def select_square(self, row, col):
+        #x1 = col * self.square_size
+        #y1 = row * self.square_size
+        #x2 = x1 + self.square_size
+        #y2 = y1 + self.square_size
+        #key = 1
         sq = chr(col + ord('a')) + str(8 - row)
         if str(row) + str(col) == self.sel_square:
-            new_color = self.original_colors[(row, col)]
+            #new_color = self.original_colors[(row, col)]
             self.sel_square = ""
         elif self.sel_square == "":
-            new_color = color
+            #new_color = color
             self.sel_square = str(row) + str(col)
         else:
-            key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
+            #key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
             selected = chr(int(self.sel_square[1]) + ord('a')) + str(8 - int(self.sel_square[0]))
             self.perform_move(selected, sq)
             
@@ -233,29 +237,20 @@ class ChessGUI:
 
             """
 
-    def select_quantum(self, row, col, color):
-        x1 = col * self.square_size
-        y1 = row * self.square_size
-        x2 = x1 + self.square_size
-        y2 = y1 + self.square_size
+    def select_quantum(self, row, col):
         key = 1
         sq = chr(col + ord('a')) + str(8 - row)
         if len(self.quantum_squares) == 0:
-            new_color = color
             self.quantum_squares.append(str(row) + str(col))
         elif str(row) + str(col) == self.quantum_squares[-1]:
-            new_color = self.original_colors[(row, col)]
-            self.quantum_squares.pop
+            self.quantum_squares.pop()
         elif len(self.quantum_squares) == 1:
             self.quantum_squares.append(str(row) + str(col))
-            new_color = color
-        elif str(row) + str(col) == self.quantum_squares[0]:
+        elif str(row) + str(col) in self.quantum_squares:
             key = 0
-            self.quantum_squares == []
-            #self.draw_board()
-            #self.draw_pieces()
+            self.quantum_squares = []
         else:
-            key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
+            key = 0
             selected = []
             selected.append(chr(int(self.quantum_squares[0][1]) + ord('a')) + str(8 - int(self.quantum_squares[0][0])))
             selected.append(chr(int(self.quantum_squares[1][1]) + ord('a')) + str(8 - int(self.quantum_squares[1][0])))
@@ -263,7 +258,6 @@ class ChessGUI:
             self.perform_quantum_move(selected)
 
         if key:
-            self.canvas.create_rectangle(x1, y1, x2, y2, fill=new_color)
             x = col * self.square_size + self.square_size // 2
             y = row * self.square_size + self.square_size // 2
             piece = self.game.position.getWhatIsOnSquare(sq)
@@ -275,9 +269,9 @@ class ChessGUI:
         col = event.x // self.square_size
         row = event.y // self.square_size
         if self.quantum_mode:
-            self.select_quantum(row, col, "purple")
+            self.select_quantum(row, col)
         else:
-            self.select_square(row, col, "green")
+            self.select_square(row, col)
 
     def on_drag(self, event):
         pass
