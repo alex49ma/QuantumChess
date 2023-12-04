@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import font
 import random
 import Game
 import re
@@ -23,11 +24,11 @@ class ChessGUI:
         self.original_colors = {}
         self.sel_square = ""
 
-        self.canvas = tk.Canvas(root, width=450, height=400)
+        self.canvas = tk.Canvas(root, width=800, height=750)
         self.canvas.pack(side=tk.LEFT)
 
         self.board_size = 8
-        self.square_size = 50
+        self.square_size = 90
         self.pieces = {}  # Store piece IDs and their positions
 
         self.draw_board()
@@ -38,33 +39,36 @@ class ChessGUI:
 
 
         # Add menu buttons
-        self.menu_frame = tk.Frame(root, width=150, height=400)
+        self.menu_frame = tk.Frame(root, width=200, height=400)
 
-        self.color_menu_frame = tk.Frame(root, width=150, height=400)
+        self.color_sel_menu_frame = tk.Frame(root, width=200, height=400)
         #self.menu_frame.pack(side=tk.RIGHT, padx=10)
         
-        self.button_end = tk.Button(self.menu_frame, text="Finish Game", command=self.end_game, height= 2, width= 15)
+        self.button_turn = tk.Button(self.menu_frame, text="♔", state=tk.DISABLED, font=font.Font(size=30), height= 1, width= 10, bg= "white")
+        self.button_turn.pack(pady=10)
+
+        self.button_end = tk.Button(self.menu_frame, text="Finish Game", command=self.end_game, font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_end.pack(pady=10)
         
-        self.button_rules = tk.Button(self.menu_frame, text="Rules", command=self.display_rules, height= 2, width= 15)
+        self.button_rules = tk.Button(self.menu_frame, text="Rules", command=self.display_rules, font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_rules.pack(pady=10)
         
-        self.button_hint = tk.Button(self.menu_frame, text="Hint", command=self.display_hint, height= 2, width= 15)
+        self.button_hint = tk.Button(self.menu_frame, text="Hint", command=self.display_hint, font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_hint.pack(pady=10)
                 
-        self.button_quantum = tk.Button(self.menu_frame, text="Quantum Move", command=self.perform_q_move, height= 2, width= 15)
+        self.button_quantum = tk.Button(self.menu_frame, text="Enter Quantum Mode", command=self.enter_quantum_mode, font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_quantum.pack(pady=10)
 
-        self.main_menu_frame = tk.Frame(root, width=150, height=400)
+        self.main_menu_frame = tk.Frame(root, width=200, height=400)
         self.main_menu_frame.pack(side=tk.RIGHT, padx=10)
 
-        self.button_start = tk.Button(self.main_menu_frame, text="Play against Stockfish", command=self.sel_color)
+        self.button_start = tk.Button(self.main_menu_frame, text="Play against Stockfish", command=self.sel_color, font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
 
-        self.button_start = tk.Button(self.main_menu_frame, text="Play with a friend", command=lambda: self.start_game(None))
+        self.button_start = tk.Button(self.main_menu_frame, text="Play with a friend", command=lambda: self.start_game(None), font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
         
-        self.button_start = tk.Button(self.main_menu_frame, text="Exit", command=self.root.destroy)
+        self.button_start = tk.Button(self.main_menu_frame, text="Exit", command=self.root.destroy, font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
 
         #self.menu_frame.pack_forget()
@@ -76,25 +80,25 @@ class ChessGUI:
     def sel_color(self):
         self.main_menu_frame.pack_forget()
 
-        self.color_menu_frame.pack(side=tk.RIGHT, padx=10)
+        self.color_sel_menu_frame.pack(side=tk.RIGHT, padx=10)
         
-        self.title_label = tk.Label(self.color_menu_frame, text="Choose a color", font=("Helvetica", 20))
+        self.title_label = tk.Label(self.color_sel_menu_frame, text="Choose a color", font=("Helvetica", 20))
         self.title_label.pack(pady=20)
 
-        self.button_start = tk.Button(self.color_menu_frame, text="White", command=lambda: self.start_game("w"))
+        self.button_start = tk.Button(self.color_sel_menu_frame, text="White", command=lambda: self.start_game("w"), font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
 
-        self.button_start = tk.Button(self.color_menu_frame, text="Black", command=lambda: self.start_game("b"))
+        self.button_start = tk.Button(self.color_sel_menu_frame, text="Black", command=lambda: self.start_game("b"), font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
         
-        self.button_start = tk.Button(self.color_menu_frame, text="Random", command=lambda: self.start_game(random.choice(["w", "b"])))
+        self.button_start = tk.Button(self.color_sel_menu_frame, text="Random", command=lambda: self.start_game(random.choice(["w", "b"])), font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
 
     def start_game(self, oponent):
         self.game = Game.Game()
         self.in_game = True
         self.menu_frame.pack(side=tk.RIGHT, padx=10)
-        self.color_menu_frame.pack_forget()
+        self.color_sel_menu_frame.pack_forget()
         self.main_menu_frame.pack_forget()  # Hide the menu frame
         self.canvas.pack(side=tk.LEFT)
         self.main_menu_frame.destroy()
@@ -113,25 +117,58 @@ class ChessGUI:
         tk.Tk(rules)
     def display_hint():
         pass
-    def perform_q_move(self):
+    def enter_quantum_mode(self):
         self.quantum_mode = not self.quantum_mode
         if self.quantum_mode:
-            self.button_quantum.config(text="Exit Quantum Mode")
+            self.button_quantum.config(text="Exit Quantum Mode", bg= "purple")
+            self.sel_square = ""
+            #self.draw_board()
+            #self.draw_pieces()
         else:
             self.quantum_piece = None
+            self.button_quantum.config(text="Enter Quantum Mode", bg= "white")
             self.quantum_squares = []
-            self.button_quantum.config(text="Quantum Move")
+            #self.draw_board()
+            #self.draw_pieces()
 
     def draw_board(self):
-        for row in range(self.board_size):
-            for col in range(self.board_size):
+        for col in range(self.board_size):
+            for row in range(self.board_size):
                 color = "white" if (row + col) % 2 == 0 else "grey"
+                frame_width = self.square_size/8
                 x0 = col * self.square_size
                 y0 = row * self.square_size
                 x1 = x0 + self.square_size
                 y1 = y0 + self.square_size
-                self.original_colors[(row, col)] = color
-                self.canvas.create_rectangle(x0, y0, x1, y1, fill=color)
+                if str(row) + str(col) in self.quantum_squares:
+                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="purple")
+                elif str(row) + str(col) in self.sel_square:
+                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="green")
+                else:
+                    self.original_colors[(row, col)] = color
+                    self.canvas.create_rectangle(x0, y0, x1, y1, fill=color)
+                    sq = chr(col + ord('a')) + str(8 - row)
+                    piece = self.game.position.getWhatIsOnSquare(sq)
+                    if piece:
+                        if piece.quantic:
+                            self.canvas.create_rectangle(x0, y0, x1, y1, fill="purple")
+                            self.canvas.create_rectangle(x0 + frame_width, y0 + frame_width, x1 - frame_width, y1 - frame_width, fill=color)
+        
+            x0 = self.square_size * col
+            y0 = self.square_size * 8
+            x1 = x0 + self.square_size
+            y1 = y0 + self.square_size/3
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill="white")
+            self.canvas.create_text(x0 + (1/2 * self.square_size), y0 + (1/7 * self.square_size), text=chr(ord('a') + col), font=("Helvetica", 20), tags=("label",))
+        for row in range(self.board_size):
+            x0 = self.square_size * 8
+            y0 = self.square_size * row
+            x1 = x0 + self.square_size/3
+            y1 = y0 + self.square_size
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill="white")
+            self.canvas.create_text(x0 + (1/6 * self.square_size), y0 + (1/2 * self.square_size), text=str(8 - row), font=("Helvetica", 20), tags=("label",))
+
+        self.canvas.create_rectangle(self.square_size * 8, self.square_size * 8, self.square_size * 8 + self.square_size/3, self.square_size * 8 + self.square_size/3, fill="white")
 
     def draw_pieces(self):
         for row in range(self.board_size):
@@ -173,15 +210,28 @@ class ChessGUI:
             key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
             selected = chr(int(self.sel_square[1]) + ord('a')) + str(8 - int(self.sel_square[0]))
             self.perform_move(selected, sq)
+            
+            """
 
         if key:
+            piece = self.game.position.getWhatIsOnSquare(sq)
+            if piece:
+                figure = piece_mapping.get(piece.pieceClass, "")
+                if piece.quantic:
+                    frame_width = self.square_size/8
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="purple")
+                    x1 += frame_width
+                    y1 += frame_width
+                    x2 -= frame_width
+                    y2 -= frame_width
+            else:
+                figure = ""
             self.canvas.create_rectangle(x1, y1, x2, y2, fill=new_color)
             x = col * self.square_size + self.square_size // 2
             y = row * self.square_size + self.square_size // 2
-            piece = self.game.position.getWhatIsOnSquare(sq)
-            if piece is not None:
-                figure = piece_mapping.get(piece.pieceClass, "")
-                self.canvas.create_text(x, y, text=figure, font=("Helvetica", 24), tags=("piece",))
+            self.canvas.create_text(x, y, text=figure, font=("Helvetica", 24), tags=("piece",))
+
+            """
 
     def select_quantum(self, row, col, color):
         x1 = col * self.square_size
@@ -200,9 +250,10 @@ class ChessGUI:
             self.quantum_squares.append(str(row) + str(col))
             new_color = color
         elif str(row) + str(col) == self.quantum_squares[0]:
+            key = 0
             self.quantum_squares == []
-            self.draw_board()
-            self.draw_pieces()
+            #self.draw_board()
+            #self.draw_pieces()
         else:
             key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
             selected = []
@@ -232,7 +283,8 @@ class ChessGUI:
         pass
 
     def on_release(self, event):
-        pass
+        self.draw_board()
+        self.draw_pieces()
 
         """
         
@@ -285,10 +337,14 @@ class ChessGUI:
 
     def perform_move(self, origin, destination):
         if re.search(pattern, origin + destination) is not None:
-            self.game.move(origin + destination)
-            self.draw_board()
-            self.draw_pieces()
+            if self.game.move(origin + destination):
+                if self.game.flagList[0] == "w":
+                    self.button_turn.config(text="♚", bg= "white")   
+                else:
+                    self.button_turn.config(text="♔", bg= "black")
             self.sel_square = ""
+            #self.draw_board()
+            #self.draw_pieces()
             
 
 
@@ -297,10 +353,16 @@ class ChessGUI:
         qmove1 = selected[0] + selected[1]
         qmove2 = selected[0] + selected[2]
         if re.search(patternQ, qmove1  + ", " + qmove2) is not None:
-            self.game.qMove(qmove1, qmove2)
-            self.draw_board()
-            self.draw_pieces()
+            if self.game.qMove(qmove1, qmove2):
+                self.quantum_mode = False
+                self.button_quantum.config(text="Enter Quantum Mode", bg= "white")
+                if self.game.flagList[0] == "w":
+                    self.button_turn.config(text="♚", bg= "white")   
+                else:
+                    self.button_turn.config(text="♔", bg= "black")
             self.quantum_squares = []
+            #self.draw_board()
+            #self.draw_pieces()
 
     def reset_piece_position(self, piece_id):
         if piece_id in self.pieces:

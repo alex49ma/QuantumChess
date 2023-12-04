@@ -94,9 +94,11 @@ class Game:
             
             self.flagList[0] = "w" if self.flagList[0] == "b" else "b" if self.flagList[0] == "w" else self.flagList[0]
             self.updateFlags(move, piece.pieceClass)
+            self.deQuantify()
+            return True
         else:
             print("Move not valid")
-        self.deQuantify()
+            return False
 
 
 
@@ -106,7 +108,7 @@ class Game:
         # Action:
         #       Checks validity, captures not allowed, manages merging indexes. Also calls a method to manage flags
         # Output:
-        #       None
+        #       Boolean: if the move has been performed or not
         move0 = Move.Move(moveStr0, self.flagList)
         move1 = Move.Move(moveStr1, self.flagList)
         qMove = Move.QuanticMove(move0, move1)
@@ -121,10 +123,10 @@ class Game:
                 self.moveList.append(qMove)
                 self.updateFlags(qMove, piece.pieceClass)
                 self.deQuantify()
-                return
+                return True
             elif(self.flagList[0] == "w" and self.QMovesWhite >= self.QMovesAllowed):
                 print("No more Qmoves allowed for white")
-                
+                return False
             if (self.flagList[0] == "b" and self.QMovesBlack < self.QMovesAllowed):
                 self.setPosition(self.position.makeMove(qMove))
                 self.position.addToAllOnSquare(moveStr0[2:4], ([len(self.moveList)]))
@@ -134,11 +136,13 @@ class Game:
                 self.moveList.append(qMove)
                 self.updateFlags(qMove, piece.pieceClass)
                 self.deQuantify()
-                return
+                return True
             elif(self.flagList[0] == "b" and self.QMovesBlack >= self.QMovesAllowed):
                 print("No more Qmoves allowed for black")
+                return False
         else:
             print("Move not valid")
+            return False
 
     def deQuantify(self):
         # Input:
