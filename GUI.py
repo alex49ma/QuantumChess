@@ -4,11 +4,12 @@ import Game
 import re
 
 rules = "Quantum Chess is a variant of the classical chess game adding some Quantum propperties. \nIn the game, sometimes pieces can be two places at once, the known as quantum superposition. \nThis happens when you make a quantum move. Quantum moves are the result of two classical \nmoves at once, so we no longer know the precise position of this piece. Piece's position \nis defined when an observation happens. In this case, when someone captures a quantum \npiece or when a quantum piece captures another. Then we have 50% chance to be on each \ndifferent position. This allows quantum entanglement. If a quantum piece has a certain \nprobability to be at one place, means that there is a probability that it is not there and \nI can pass through it with a slide move. In this case the piece may have done the movement \nor not, it depends on the final position of the previous quantum piece. It is entangled.\nTo win, you must capture the enemy king."
-piece_data = {
+piece_mapping = {
     "K": "♔", "Q": "♕", "R": "♖", "N": "♘", "B": "♗", "P": "♙",
     "k": "♚", "q": "♛", "r": "♜", "n": "♞", "b": "♝", "p": "♟"
 }
 pattern = r'^[a-h][1-8][a-h][1-8][qrbn]?$'
+patternQ = r'^[a-h][1-8][a-h][1-8], [a-h][1-8][a-h][1-8][qrbn]?$'
 
 class ChessGUI:
 
@@ -151,7 +152,7 @@ class ChessGUI:
                 if piece:
                     x = col * self.square_size + self.square_size // 2
                     y = row * self.square_size + self.square_size // 2
-                    text = piece_data.get(piece.pieceClass, "")
+                    text = piece_mapping.get(piece.pieceClass, "")
                     piece_id = self.canvas.create_text(x, y, text=text, font=("Helvetica", 24), tags=("piece",))
                     self.pieces[piece_id] = (piece, row, col)
 
@@ -166,7 +167,7 @@ class ChessGUI:
             new_color = self.original_colors[(row, col)]
             self.sel_square = ""
         elif self.sel_square == "":
-            new_color = "green"
+            new_color = color
             self.sel_square = str(row) + str(col)
         else:
             key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
@@ -179,13 +180,53 @@ class ChessGUI:
             y = row * self.square_size + self.square_size // 2
             piece = self.game.position.getWhatIsOnSquare(sq)
             if piece is not None:
-                figure = piece_data.get(piece.pieceClass, "")
+                figure = piece_mapping.get(piece.pieceClass, "")
+                self.canvas.create_text(x, y, text=figure, font=("Helvetica", 24), tags=("piece",))
+
+    def select_quantum(self, row, col, color):
+        x1 = col * self.square_size
+        y1 = row * self.square_size
+        x2 = x1 + self.square_size
+        y2 = y1 + self.square_size
+        key = 1
+        sq = chr(col + ord('a')) + str(8 - row)
+        if len(self.quantum_squares) == 0:
+            new_color = color
+            self.quantum_squares.append(str(row) + str(col))
+        elif str(row) + str(col) == self.quantum_squares[-1]:
+            new_color = self.original_colors[(row, col)]
+            self.quantum_squares.pop
+        elif len(self.quantum_squares) == 1:
+            self.quantum_squares.append(str(row) + str(col))
+            new_color = color
+        elif str(row) + str(col) == self.quantum_squares[0]:
+            self.quantum_squares == []
+            self.draw_board()
+            self.draw_pieces()
+        else:
+            key = 0 # Without a new color, you shall not try to paint. When moves performed, the square selected will come back to it's previous color
+            selected = []
+            selected.append(chr(int(self.quantum_squares[0][1]) + ord('a')) + str(8 - int(self.quantum_squares[0][0])))
+            selected.append(chr(int(self.quantum_squares[1][1]) + ord('a')) + str(8 - int(self.quantum_squares[1][0])))
+            selected.append(sq)
+            self.perform_quantum_move(selected)
+
+        if key:
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill=new_color)
+            x = col * self.square_size + self.square_size // 2
+            y = row * self.square_size + self.square_size // 2
+            piece = self.game.position.getWhatIsOnSquare(sq)
+            if piece is not None:
+                figure = piece_mapping.get(piece.pieceClass, "")
                 self.canvas.create_text(x, y, text=figure, font=("Helvetica", 24), tags=("piece",))
 
     def on_click(self, event):
         col = event.x // self.square_size
         row = event.y // self.square_size
-        self.select_square(row, col, "green")
+        if self.quantum_mode:
+            self.select_quantum(row, col, "purple")
+        else:
+            self.select_square(row, col, "green")
 
     def on_drag(self, event):
         pass
@@ -252,8 +293,14 @@ class ChessGUI:
 
 
 
-    def perform_quantum_move(self):
-        pass
+    def perform_quantum_move(self, selected):
+        qmove1 = selected[0] + selected[1]
+        qmove2 = selected[0] + selected[2]
+        if re.search(patternQ, qmove1  + ", " + qmove2) is not None:
+            self.game.qMove(qmove1, qmove2)
+            self.draw_board()
+            self.draw_pieces()
+            self.quantum_squares = []
 
     def reset_piece_position(self, piece_id):
         if piece_id in self.pieces:
