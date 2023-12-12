@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import font
+from tkinter import messagebox
 import random
 import Game
 import re
 
-rules = "Quantum Chess is a variant of the classical chess game adding some Quantum propperties. \nIn the game, sometimes pieces can be two places at once, the known as quantum superposition. \nThis happens when you make a quantum move. Quantum moves are the result of two classical \nmoves at once, so we no longer know the precise position of this piece. Piece's position \nis defined when an observation happens. In this case, when someone captures a quantum \npiece or when a quantum piece captures another. Then we have 50% chance to be on each \ndifferent position. This allows quantum entanglement. If a quantum piece has a certain \nprobability to be at one place, means that there is a probability that it is not there and \nI can pass through it with a slide move. In this case the piece may have done the movement \nor not, it depends on the final position of the previous quantum piece. It is entangled.\nTo win, you must capture the enemy king."
+rules = "Quantum Chess is a variant of the classical chess game adding some Quantum propperties. In the game, sometimes pieces can be two places at once, the known as quantum superposition. This happens when you make a quantum move. Quantum moves are the result of two classical moves at once, so we no longer know the precise position of this piece. Piece's position is defined when an observation happens. In this case, when someone captures a quantum piece or when a quantum piece captures another. Then we have 50% chance to be on each different position. This allows quantum entanglement. If a quantum piece has a certain probability to be at one place, means that there is a probability that it is not there and I can pass through it with a slide move. In this case the piece may have done the movement or not, it depends on the final position of the previous quantum piece. It is entangled.To win, you must capture the enemy king."
 piece_mapping = {
     "K": "♔", "Q": "♕", "R": "♖", "N": "♘", "B": "♗", "P": "♙",
     "k": "♚", "q": "♛", "r": "♜", "n": "♞", "b": "♝", "p": "♟"
@@ -101,7 +102,6 @@ class ChessGUI:
         self.color_sel_menu_frame.pack_forget()
         self.main_menu_frame.pack_forget()  # Hide the menu frame
         self.canvas.pack(side=tk.LEFT)
-        self.main_menu_frame.destroy()
         
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<B1-Motion>", self.on_drag)
@@ -111,12 +111,37 @@ class ChessGUI:
     def loop(self, oponent):
         pass
 
-    def end_game():
-        pass
+    def end_game(self):
+        confirm = messagebox.askokcancel("End Game", "Are you sure you want to end the game here?")
+        if confirm:
+            self.game = Game.Game()
+            self.quantum_mode = False
+            self.quantum_piece = None
+            self.quantum_squares = []
+            self.original_colors = {}
+            self.sel_square = ""
+
+            self.canvas.unbind("<Button-1>")
+            self.canvas.unbind("<B1-Motion>")
+            self.canvas.unbind("<ButtonRelease-1>")
+
+
+            self.main_menu_frame.pack(side=tk.RIGHT, padx=10)
+            self.color_sel_menu_frame.pack_forget()
+            self.menu_frame.pack_forget()  # Hide the menu frame
+            self.canvas.pack(side=tk.LEFT)
+
+            self.draw_board()
+            self.draw_pieces()
+            
+
     def display_rules(self):
-        tk.Tk(rules)
-    def display_hint():
-        pass
+        messagebox.showinfo("Rules", rules)
+
+    def display_hint(self):
+        messagebox.showinfo("Hints", "Hints feature not implemented in the user interface yet")
+        # TODO implement Hints feature
+
     def enter_quantum_mode(self):
         self.quantum_mode = not self.quantum_mode
         if self.quantum_mode:
@@ -249,6 +274,12 @@ class ChessGUI:
     def on_release(self, event):
         self.draw_board()
         self.draw_pieces()
+        if self.game.over:
+            messagebox.showinfo("Game over", str(self.game.over))
+            self.canvas.unbind("<Button-1>")
+            self.canvas.unbind("<B1-Motion>")
+            self.canvas.unbind("<ButtonRelease-1>")
+
 
         """
         

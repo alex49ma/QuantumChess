@@ -55,10 +55,10 @@ class Game:
         move = Move.Move(moveStr, self.flagList)
         piece = self.position.getWhatIsOnSquare(move.move[0:2])
         if move.isValid(self.position):
+            interferencers = list(set(ChessUtils.getInterference(self.position, move.move)))
             if move.isCapture(self.position):
                 capturer = piece
                 captured = self.position.getWhatIsOnSquare(move.move[2:4])
-                interferencers = list(set(ChessUtils.getInterference(self.position, move.move)))
                 
                 for indexMove in interferencers:
                     choice = random.randint(0, 1)
