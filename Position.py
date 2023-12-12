@@ -77,6 +77,15 @@ class Position:
                 self.listRows[desRow][desCol] = piece
             return AbstractPosition(copy.deepcopy(self))
         
+    def noMakeMove(self, move = None):
+        # Input:
+        #       Move or None
+        # Action:
+        #       when a move is not suitable to do anything (because it is not legal in this subposition) this method gives back the updated tree
+        # Output:
+        #       Updated Abstract of self
+        return AbstractPosition(copy.deepcopy(self))
+        
     def makeQuanticPiece(self, square):
         ############ Possibly Outdated #################
         # Input
@@ -253,6 +262,16 @@ class AbstractPosition(Position):
         #       Abstract Position result of the movement
         return AbstractPosition(copy.deepcopy(self.position.makeMove(move)))
     
+    def noMakeMove(self, move = None):
+        # Input:
+        #       Move or None
+        # Action:
+        #       when a move is not suitable to do anything (because it is not legal in this subposition) this method gives back the updated tree
+        # Output:
+        #       Updated tree
+        self.position = self.position.noMakeMove(move)
+        return self
+    
     def makeQuanticPiece(self, square):
         ############ Possibly Outdated #################
         return self.position.makeQuanticPiece(square)
@@ -287,7 +306,7 @@ class AbstractPosition(Position):
         # Output
         #       Abstract position result of the merge of the nodes in the selected index
         if move == 0:
-            print("You tried to merge an abstract position")
+            return self
         else:
             return AbstractPosition(copy.deepcopy(self.position).mergePosition(move - 1, choice))
         
@@ -380,6 +399,8 @@ class QuanticPosition(Position):
         validForPos0 = move.isValid(self.position0)
         validForPos1 = move.isValid(self.position1)
         QEntanglement = []
+        key0 = 1
+        key1 = 1
         if move.isQuantic():
             moveStr = move.move0.move
             if validForPos0 and not validForPos1:
@@ -392,15 +413,30 @@ class QuanticPosition(Position):
             moveStr = move.move
         if validForPos0 and not validForPos1:
             QEntanglement = ChessUtils.getInterference(self.position1, moveStr)
-            self.position1 = AbstractPosition(copy.deepcopy(self.position1))
+            self.position1 = self.position1.noMakeMove(move) 
+            key1 = 0
         elif validForPos1 and not validForPos0:
             QEntanglement = ChessUtils.getInterference(self.position0, moveStr)
-            self.position0 = AbstractPosition(copy.deepcopy(self.position0))
-        self.getWhatIsOnSquare(moveStr[0:2]).addMoves(QEntanglement)
-        if validForPos0 or move.isQuantic():
+            self.position0 = self.position0.noMakeMove(move) 
+            key0 = 0
+        piece = self.getWhatIsOnSquare(moveStr[0:2])
+        if piece:
+            piece.addMoves(QEntanglement)
+        if validForPos0 or (move.isQuantic() and key0):
             self.position0 = self.position0.makeMove(move)
-        if validForPos1 or move.isQuantic():
+        if validForPos1 or (move.isQuantic() and key1):
             self.position1 = self.position1.makeMove(move)
+        return self
+    
+    def noMakeMove(self, move = None):
+        # Input:
+        #       Move or None
+        # Action:
+        #       when a move is not suitable to do anything (because it is not legal in this subposition) this method gives back the updated tree
+        # Output:
+        #       Updated tree
+        self.position0 = self.position0.noMakeMove(move)
+        self.position1 = self.position1.noMakeMove(move)
         return self
     
     def setPiece(self, piece, square):

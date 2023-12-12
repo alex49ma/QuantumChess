@@ -13,6 +13,7 @@ class Game:
         self.moveList = []
         self.flags = "w KQkq - 0 1"
         self.flagList = self.flags.split()
+        self.linked = []
 
         self.over = False
 
@@ -54,10 +55,10 @@ class Game:
         move = Move.Move(moveStr, self.flagList)
         piece = self.position.getWhatIsOnSquare(move.move[0:2])
         if move.isValid(self.position):
+            interferencers = list(set(ChessUtils.getInterference(self.position, move.move)))
             if move.isCapture(self.position):
                 capturer = piece
                 captured = self.position.getWhatIsOnSquare(move.move[2:4])
-                interferencers = ChessUtils.getInterference(self.position, move.move)
                 
                 for indexMove in interferencers:
                     choice = random.randint(0, 1)
@@ -68,7 +69,8 @@ class Game:
                         self.QMovesBlack -=1
 
                 if capturer.isQuantic():
-                    for indexMove in capturer.listMoves:
+                    listToMerge = self.getListToMerge(moveStr[0:2], capturer)
+                    for indexMove in listToMerge:
                         choice = random.randint(0, 1)
                         self.position = self.position.mergePosition(indexMove, choice)
                         if self.flagList[0] == "w":     # When merging, we give back the possibility to make more quantic moves
@@ -81,7 +83,8 @@ class Game:
                     if move.move[3] == "3" and move.move[1] == "4":
                         captured = self.position.getWhatIsOnSquare(move.move[2] + str(4))
                 if captured.isQuantic():
-                    for indexMove in captured.listMoves:
+                    listToMerge = self.getListToMerge(moveStr[2:4], captured)
+                    for indexMove in listToMerge:
                         choice = random.randint(0, 1)
                         self.position = self.position.mergePosition(indexMove, choice)
                         if self.flagList[0] == "b":
@@ -94,10 +97,28 @@ class Game:
             
             self.flagList[0] = "w" if self.flagList[0] == "b" else "b" if self.flagList[0] == "w" else self.flagList[0]
             self.updateFlags(move, piece.pieceClass)
+            self.link(move)
+            self.deQuantify()
+            return True
         else:
             print("Move not valid")
-        self.deQuantify()
+            return False
 
+    def getListToMerge(self, sq, piece):
+        # Input:
+        #       A string that represents a square, with a character and a number
+        # Action:
+        #       Checks in the linked list all the other pieces he is linked to and his merging indexes
+        # Output:
+        #       A list with the merging indexes of this piece and all others linked to
+        listMerged = []
+        for links in self.linked:
+            if sq in links:
+                for squareLinked in links:
+                    piece = self.position.getWhatIsOnSquare(squareLinked)
+                    if isinstance(piece, Piece.Piece):
+                        listMerged = list(set(listMerged) | set(piece.listMoves))
+        return listMerged
 
 
     def qMove(self, moveStr0, moveStr1):
@@ -106,7 +127,7 @@ class Game:
         # Action:
         #       Checks validity, captures not allowed, manages merging indexes. Also calls a method to manage flags
         # Output:
-        #       None
+        #       Boolean: if the move has been performed or not
         move0 = Move.Move(moveStr0, self.flagList)
         move1 = Move.Move(moveStr1, self.flagList)
         qMove = Move.QuanticMove(move0, move1)
@@ -121,10 +142,12 @@ class Game:
                 self.moveList.append(qMove)
                 self.updateFlags(qMove, piece.pieceClass)
                 self.deQuantify()
-                return
+                self.link(qMove)
+                self.linked.append([moveStr0[2:4], moveStr1[2:4]])
+                return True
             elif(self.flagList[0] == "w" and self.QMovesWhite >= self.QMovesAllowed):
                 print("No more Qmoves allowed for white")
-                
+                return False
             if (self.flagList[0] == "b" and self.QMovesBlack < self.QMovesAllowed):
                 self.setPosition(self.position.makeMove(qMove))
                 self.position.addToAllOnSquare(moveStr0[2:4], ([len(self.moveList)]))
@@ -134,11 +157,33 @@ class Game:
                 self.moveList.append(qMove)
                 self.updateFlags(qMove, piece.pieceClass)
                 self.deQuantify()
-                return
+                self.link(qMove)
+                self.linked.append([moveStr0[2:4], moveStr1[2:4]])
+
+                return True
             elif(self.flagList[0] == "b" and self.QMovesBlack >= self.QMovesAllowed):
                 print("No more Qmoves allowed for black")
+                return False
         else:
             print("Move not valid")
+            return False
+        
+    def link(self, move):
+        # Input:
+        #       Move object, movement that has been done
+        # Action:
+        #       Alters the self.linked list, containing the squares where are quantum pieces that are linked to each other
+        # Output:
+        #       None
+        if move.isQuantic():
+            self.link(move.move0)
+            self.link(move.move1)
+        else:
+            for i in range(len(self.linked)):  
+                objective = move.move[0:2]
+                subs = move.move[2:4]
+                if objective in self.linked[i]:
+                    self.linked[i][self.linked[i].index(objective)] = subs
 
     def deQuantify(self):
         # Input:
