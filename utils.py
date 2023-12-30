@@ -3,10 +3,10 @@ import chess
 import copy
 import Position
 import Piece
-import stockfish
-#from stockfish import stockfish
+#import stockfish
+from stockfish import Stockfish
 
-# stockfish = Stockfish(path="./stockfish_15_win_x64_avx2/stockfish_15_x64_avx2.exe")
+stockfish = Stockfish(path="./Stockfish/stockfish_15_x64_avx2.exe")
 
 class ChessUtils:
 
@@ -487,8 +487,8 @@ class ChessUtils:
                     else:
                         evalMoves.append(move.get("Centipawn") / 100)
                 return ChessUtils.optimize(position, flags, evalMoves, listMoves)
-            except:
-                return None
+            except Exception as inst:
+                return inst
             
     def optimize(position, flags, averageEvalForMoves, listAllMoves):
             # Input:

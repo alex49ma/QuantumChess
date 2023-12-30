@@ -139,8 +139,20 @@ class ChessGUI:
         messagebox.showinfo("Rules", rules)
 
     def display_hint(self):
-        messagebox.showinfo("Hints", "Hints feature not implemented in the user interface yet")
-        # TODO implement Hints feature
+        hint = self.game.moveHint()
+        moveList = ""
+        counter = 0
+        for recom in hint:
+            moves = recom[0].split(", ")
+            for move in moves:
+                sq = move[0:2]
+                piece = self.game.position.getWhatIsOnSquare(sq)
+                unicod = piece_mapping.get(piece.pieceClass)
+                moveList += unicod+ " " +  move[2:4] + " "
+            moveList += "\n"
+            counter += 1
+            if counter == 3: break
+        messagebox.showinfo("Hints", moveList)
 
     def enter_quantum_mode(self):
         self.quantum_mode = not self.quantum_mode

@@ -37,6 +37,7 @@ class Position:
                 if emptySpaces > 0:
                     rowStr += str(emptySpaces)
                 fen += rowStr + "/"
+            fen.rstrip("/")
             return fen + " " + flags[0] + " " + flags[1] + " " + flags[2] + " 0 1"
 
     
