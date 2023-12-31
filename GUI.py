@@ -3,6 +3,7 @@ from tkinter import font
 from tkinter import messagebox
 import random
 import Game
+import Move
 import re
 
 rules = "Quantum Chess is a variant of the classical chess game adding some Quantum propperties. In the game, sometimes pieces can be two places at once, the known as quantum superposition. This happens when you make a quantum move. Quantum moves are the result of two classical moves at once, so we no longer know the precise position of this piece. Piece's position is defined when an observation happens. In this case, when someone captures a quantum piece or when a quantum piece captures another. Then we have 50% chance to be on each different position. This allows quantum entanglement. If a quantum piece has a certain probability to be at one place, means that there is a probability that it is not there and I can pass through it with a slide move. In this case the piece may have done the movement or not, it depends on the final position of the previous quantum piece. It is entangled.To win, you must capture the enemy king."
@@ -17,6 +18,7 @@ class ChessGUI:
 
     def __init__(self, root):
         self.game = Game.Game()
+        self.player = None
         self.root = root
         self.quantum_mode = False
         self.quantum_piece = None
@@ -95,7 +97,7 @@ class ChessGUI:
         self.button_start = tk.Button(self.color_sel_menu_frame, text="Random", command=lambda: self.start_game(random.choice(["w", "b"])), font=font.Font(size=16), height= 2, width= 18, bg= "white")
         self.button_start.pack(pady=10)
 
-    def start_game(self, oponent):
+    def start_game(self, player):
         self.game = Game.Game()
         self.in_game = True
         self.menu_frame.pack(side=tk.RIGHT, padx=10)
@@ -106,10 +108,12 @@ class ChessGUI:
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<B1-Motion>", self.on_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
-        self.loop(oponent)
-
-    def loop(self, oponent):
-        pass
+        self.player = player
+        if player:
+            if player == "b":
+                self.oponentMove()
+                self.draw_board()
+                self.draw_pieces()
 
     def end_game(self):
         confirm = messagebox.askokcancel("End Game", "Are you sure you want to end the game here?")
@@ -291,6 +295,39 @@ class ChessGUI:
             self.canvas.unbind("<Button-1>")
             self.canvas.unbind("<B1-Motion>")
             self.canvas.unbind("<ButtonRelease-1>")
+        if self.player:
+            if self.player != self.game.flagList[0]:
+                self.canvas.unbind("<Button-1>")
+                self.canvas.unbind("<B1-Motion>")
+                self.canvas.unbind("<ButtonRelease-1>")
+                try:
+                    self.oponentMove()
+                except Exception as inst:
+                    print(inst)    
+                self.draw_board()
+                self.draw_pieces()
+                self.canvas.bind("<Button-1>", self.on_click)
+                self.canvas.bind("<B1-Motion>", self.on_drag)
+                self.canvas.bind("<ButtonRelease-1>", self.on_release)
+
+
+    def oponentMove(self):
+        hint = self.game.moveHint()  
+        hintIndex = 0 
+        move = Move.Move(hint[hintIndex][0], self.game.flagList)
+        flag = True
+        while move.isQuantic() and flag:
+            if Game.ChessUtils.isCapture(move.move0) or Game.ChessUtils.isCapture(move.move1):
+                hintIndex += 1
+                move = Move.Move(hint[hintIndex][0], self.game.flagList)
+            else:
+                flag = False
+        if move.isQuantic():
+            self.game.qMove(move.move0.move + ", " + move.move1.move) 
+        else:
+            self.game.move(move.move)
+        
+
 
 
         """
