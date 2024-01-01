@@ -1,6 +1,7 @@
 import Piece
 from utils import ChessUtils
 import copy
+from validator import validator
 
 
 class Position:
@@ -50,9 +51,9 @@ class Position:
             p0 = Position(copy.deepcopy(self.listRows))
             p1 = Position(copy.deepcopy(self.listRows))
             
-            if ChessUtils.isValid(self, move.move0):
+            if validator.isValid(self, move.move0):
                 p0.makeMove(move.move0)
-            if ChessUtils.isValid(self, move.move1):
+            if validator.isValid(self, move.move1):
                 p1.makeMove(move.move1)
             #if isinstance(result0, bool):
             #    self.getWhatIsOnSquare(move.move1)

@@ -1,4 +1,5 @@
 import Position
+from validator import validator
 from utils import ChessUtils
 
 class Move:
@@ -42,7 +43,7 @@ class Move:
             isValid1 = self.isValid(position.position1)
             return isValid0 or isValid1
         else:
-            return ChessUtils.isValid(position, self)
+            return validator.isValid(position, self)
 
     def isCapture(self, position):
         # Input:
