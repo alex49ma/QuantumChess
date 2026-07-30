@@ -96,9 +96,68 @@ class StubBoard:
         return False
 
 
+def renderRows(position) -> list[str]:
+    """Render any board-like object as 8 ASCII rows, rank 8 first.
+
+    Works for ``StubBoard`` and for every node of the position tree, since they
+    all implement ``getWhatIsOnSquare``. Deliberately ignores superposition so
+    that golden boards stay readable; use ``quanticSquares`` for that.
+    """
+    rows = []
+    for rank in range(8, 0, -1):
+        row = ""
+        for file in range(8):
+            piece = position.getWhatIsOnSquare(chr(ord("a") + file) + str(rank))
+            row += piece.pieceClass if piece is not None else "."
+        rows.append(row)
+    return rows
+
+
+def quanticSquares(position) -> list[tuple[str, str, tuple]]:
+    """Every square holding a superposed piece: (square, pieceClass, listMoves)."""
+    found = []
+    for rank in range(8, 0, -1):
+        for file in range(8):
+            square = chr(ord("a") + file) + str(rank)
+            piece = position.getWhatIsOnSquare(square)
+            if piece is not None and piece.isQuantic():
+                found.append((square, piece.pieceClass, tuple(piece.listMoves)))
+    return found
+
+
 @pytest.fixture(scope="session")
 def repo_root() -> Path:
     return REPO_ROOT
+
+
+@pytest.fixture
+def render():
+    """See :func:`renderRows`."""
+    return renderRows
+
+
+@pytest.fixture
+def quantics():
+    """See :func:`quanticSquares`."""
+    return quanticSquares
+
+
+@pytest.fixture
+def game():
+    """Factory for a ``Game`` positioned from an ASCII diagram. Requires the engine."""
+    import Game as GameModule
+    import Position
+
+    def make(rows: list[str] = None, flags: list[str] = None):
+        instance = GameModule.Game()
+        if rows is not None:
+            assert len(rows) == 8 and all(len(r) == 8 for r in rows), "need an 8x8 diagram"
+            instance.position = Position.Position(instance.setInitPieces(rows))
+        if flags is not None:
+            instance.flagList = list(flags)
+        return instance
+
+    return make
 
 
 @pytest.fixture

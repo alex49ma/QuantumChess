@@ -1,11 +1,54 @@
 import chess
 import copy
+import logging
 import Position
 import Piece
 #import stockfish
-from stockfish import Stockfish
+from stockfish import Stockfish, StockfishException
 
 stockfish = Stockfish(path="./Stockfish/stockfish_15_x64_avx2.exe")
+
+logger = logging.getLogger(__name__)
+
+# Exceptions tolerated around engine calls, where the fallback is a sentinel
+# evaluation rather than a crash.
+#
+# This tuple is deliberately too wide. AttributeError and TypeError are
+# programming errors, not engine failures -- they are only tolerated here
+# because several are currently live (see PLAN.md items 3.3, 3.4 and 3.12) and
+# turning them into hard crashes mid-game would be worse than a wrong number.
+# Every occurrence is now logged instead of silently swallowed.
+#
+# Once Phase 3 lands, narrow this to (StockfishException, ValueError) so that
+# genuine bugs propagate again.
+ENGINE_FAILURE = (
+    StockfishException,
+    ValueError,
+    KeyError,
+    TypeError,
+    AttributeError,
+    ZeroDivisionError,
+)
+
+
+def _logEngineFailure(where, exc, **context):
+    # Input:
+    #       Name of the calling site, the exception, and any useful context
+    # Action:
+    #       Records a swallowed engine failure. One line at WARNING so a
+    #       repeated failure does not flood the console; full traceback at DEBUG
+    # Output:
+    #       None
+    detail = ", ".join(f"{key}={value!r}" for key, value in context.items())
+    logger.warning(
+        "%s: engine call failed (%s: %s)%s -- falling back to sentinel evaluation",
+        where,
+        type(exc).__name__,
+        exc,
+        f" [{detail}]" if detail else "",
+    )
+    logger.debug("%s: full traceback", where, exc_info=True)
+
 
 class ChessUtils:
 
@@ -124,7 +167,8 @@ class ChessUtils:
                     stockfish.set_fen_position(fen)
                     result = stockfish.get_evaluation().get("value")/100.0
                     return round(result, 2)
-                except:
+                except ENGINE_FAILURE as exc:
+                    _logEngineFailure("evalPosition", exc, fen=fen)
                     if flags[0] == "w":
                         return 100.0
                     else:
@@ -247,7 +291,11 @@ class ChessUtils:
                     else:
                         flags[0] = ChessUtils.invert(flags[0])
                         return ChessUtils.evalPosition(position, flags)
-            except:
+            except ENGINE_FAILURE as exc:
+                # NOTE: the sentinel signs here are the OPPOSITE of the ones in
+                # evalPosition above. Preserved as-is for now; confirm which is
+                # correct in Phase 3.
+                _logEngineFailure("evalNMove", exc, move=move, fen=fen)
                 if flags[0] == "w":
                     return -100.0
                 else:
@@ -309,7 +357,11 @@ class ChessUtils:
                     else:
                         evalMoves.append(move.get("Centipawn") / 100)
                 return ChessUtils.optimize(position, flags, evalMoves, listMoves)
-            except Exception as inst:
+            except ENGINE_FAILURE as inst:
+                # Returning the exception object is itself a defect (PLAN.md
+                # 3.9): callers iterate over the result. Left in place so this
+                # phase changes visibility only; Phase 3 returns [] instead.
+                _logEngineFailure("moveHint", inst, flags=flags)
                 return inst
             
     def optimize(position, flags, averageEvalForMoves, listAllMoves):

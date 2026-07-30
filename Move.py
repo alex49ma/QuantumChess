@@ -1,6 +1,9 @@
+import logging
 import Position
 from validator import validator
 from utils import ChessUtils
+
+logger = logging.getLogger(__name__)
 
 class Move:
 
@@ -55,7 +58,13 @@ class Move:
         if position.isQuantic():
             try:
                 return self.isCapture(position.position0) or self.isCapture(position.position1)
-            except:
+            except (AttributeError, TypeError, ValueError, IndexError) as exc:
+                logger.warning(
+                    "Move.isCapture: could not inspect superposition branches for %r "
+                    "(%s: %s) -- assuming not a capture",
+                    getattr(self, "move", self), type(exc).__name__, exc,
+                )
+                logger.debug("Move.isCapture: full traceback", exc_info=True)
                 return False
         else:
             return ChessUtils.isCapture(position, self)
