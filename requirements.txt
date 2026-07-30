@@ -1,0 +1,13 @@
+# Runtime dependencies for Quantum Chess.
+#     pip install -r requirements.txt
+#
+# tkinter (GUI) is NOT listed: it ships with CPython on Windows and macOS.
+# On Debian/Ubuntu install it through the system package manager:
+#     sudo apt install python3-tk
+#
+# The Stockfish *binary* is also not a pip dependency -- the package below is
+# only a wrapper that drives an external executable. See the README section
+# "Installing the Stockfish engine".
+
+chess>=1.11,<2         # FEN parsing and check detection
+stockfish>=4.0,<5      # wrapper around the Stockfish executable

@@ -161,7 +161,8 @@ preserves depth. This yields the invariant the collapse machinery depends on:
 That is why `Piece.listMoves` can store plain move numbers and
 `Position.mergePosition(index, choice)` can find the right node by descending
 `index` levels from the root. If you change how moves build the tree, you must
-preserve this invariant — there is a regression test for it (see `PLAN.md`).
+preserve this invariant, and it should stay covered by a regression test in
+`tests/`.
 
 Reading a square via `getWhatIsOnSquare` walks down the tree; on a
 `QuanticPosition` it returns whichever branch has a piece there, preferring
@@ -204,11 +205,43 @@ from both halves plus the opponent's best replies to each.
 
 ---
 
-## Development status
+## Tests
 
-This is an actively evolving research project. A full code audit — known
-defects, severity, reproductions, and a phased remediation plan — lives in
-[PLAN.md](PLAN.md). **Read it before making changes**, particularly the notes on
-the superposition-tree invariant and on the evaluation pipeline.
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
 
-There is currently no automated test suite; adding one is Phase 1 of that plan.
+Tests live in `tests/`. Two things are worth knowing before adding to them:
+
+**Most tests do not need the Stockfish binary.** `validator.py` imports only
+`math`, and `Piece.py` imports nothing, so the classical rule logic can be
+exercised anywhere. `tests/conftest.py` provides a `stub_board` fixture — an
+engine-free stand-in built from an 8-row ASCII diagram, rank 8 first:
+
+```python
+def test_something(stub_board):
+    board = stub_board([
+        "....k...", "........", "........", "........",
+        "........", "........", "........", "....K..R",
+    ])
+```
+
+Tests that genuinely need the engine take the `real_board` fixture and must be
+marked `@pytest.mark.needs_engine`; they skip themselves when the binary is
+missing. This matters because `utils.py` constructs Stockfish at *module* level,
+so `import Game` fails outright without it — which is the case on a fresh clone
+and in CI.
+
+**Set `PYTHONHASHSEED=0` when chasing an ordering bug.** Several code paths
+de-duplicate with `set()`, whose iteration order varies per process, so results
+can differ between otherwise identical runs. CI pins the seed to 0 so such
+failures are reproducible rather than intermittent:
+
+```powershell
+$env:PYTHONHASHSEED = "0"; pytest    # PowerShell
+```
+
+CI runs the suite on Python 3.10 / 3.11 / 3.12 (`.github/workflows/tests.yml`).
+
+---

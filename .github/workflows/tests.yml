@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # validator.py uses match/case, so 3.10 is the floor.
+        python-version: ["3.10", "3.11", "3.12"]
+
+    env:
+      # Pin the hash seed so set()/dict ordering is reproducible. Ordering bugs
+      # then fail consistently instead of intermittently. See pytest.ini.
+      PYTHONHASHSEED: "0"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        # The Stockfish binary is not tracked in git, so it is absent here.
+        # Tests marked `needs_engine` skip themselves; see tests/conftest.py.
+        run: pytest
